@@ -29,12 +29,35 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Verifica che gli assets esistano
-if [[ ! -f "$ASSETS_DIR/encrypted_archive.zip" ]] || [[ ! -f "$ASSETS_DIR/final_mission.gpg" ]]; then
+# Verifica che gli assets esistano (5 ZIP + 1 GPG)
+REQUIRED_ZIPS=(
+    "backup_system_core.zip"
+    "data_dump_node7.zip"
+    "encrypted_payload.zip"
+    "kernel_snapshot_v2.zip"
+    "memory_sector_dump.zip"
+)
+
+MISSING_FILES=()
+
+for zip_file in "${REQUIRED_ZIPS[@]}"; do
+    if [[ ! -f "$ASSETS_DIR/$zip_file" ]]; then
+        MISSING_FILES+=("$zip_file")
+    fi
+done
+
+if [[ ! -f "$ASSETS_DIR/final_mission.gpg" ]]; then
+    MISSING_FILES+=("final_mission.gpg")
+fi
+
+if [[ ${#MISSING_FILES[@]} -gt 0 ]]; then
     echo -e "${RED}ERRORE: File assets mancanti!${NC}"
-    echo "Assicurati che la cartella 'assets' contenga:"
-    echo "  - encrypted_archive.zip"
-    echo "  - final_mission.gpg"
+    echo "Mancano i seguenti file nella cartella 'assets':"
+    for f in "${MISSING_FILES[@]}"; do
+        echo "  - $f"
+    done
+    echo ""
+    echo "Esegui prima: ./create_assets.sh"
     exit 1
 fi
 
