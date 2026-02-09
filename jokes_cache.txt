@@ -1,0 +1,25 @@
+Perché i programmatori preferiscono il buio? Perché la luce attira i bug!
+Ci sono solo 10 tipi di persone: chi capisce il binario e chi no.
+Un SQL query entra in un bar, si avvicina a due tavoli e chiede: "Posso unirmi a voi?"
+Perché i programmatori confondono Halloween e Natale? Perché Oct 31 = Dec 25!
+Il Wi-Fi non funziona? Hai provato a spegnerlo e riaccenderlo? - Ogni tecnico IT
+Il mio codice non ha bug, ha feature non documentate.
+Java e C erano in un bar. C dice: "Perché sei così lento?" Java risponde: "Almeno io ho la garbage collection!"
+Essere un programmatore è 10% scrivere codice e 90% capire perché non funziona.
+Ho un problema con il mio computer: è tra la sedia e la tastiera.
+La vita è breve. Usa Python.
+Perché Linux è come un frigorifero? Perché sai sempre che c'è qualcosa dentro, ma non riesci mai a trovarlo!
+In caso di incendio: git commit, git push, poi esci dall'edificio.
+Un programmatore ha 99 problemi, ma la memoria heap non è uno di quelli... wait, OutOfMemoryError!
+Dicono che la pazienza è una virtù. Chiaramente non hanno mai aspettato una compilazione di C++.
+Il mio hobby preferito? Fixare bug che ho creato mentre fixavo altri bug.
+Essere vegano in informatica: uso solo software open-source, biologico e senza DRM.
+Come si chiama un serpente che scrive codice? Un Python!
+Un byte entra in un bar e ordina 8 bit.
+Il codice funziona sul mio computer... Ship it!
+L'unica costante nella vita di un programmatore sono le variabili.
+Non sono antisociale, il mio codice è in produzione e non posso uscire.
+La documentazione è come il sesso: quando è buona, è fantastica, ma quando è assente, funziona lo stesso.
+Perché il programmatore si è dimesso? Perché non gli hanno dato un array.
+Ho finalmente capito come funziona la ricorsione! Ho finalmente capito come funziona la ricorsione!
+Linux: perché riavviare per installare un driver quando puoi ricompilare il kernel?
