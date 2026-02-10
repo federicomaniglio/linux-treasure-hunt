@@ -179,7 +179,7 @@ print_progress "Directory create"
 #===============================================================================
 # TAPPA 1: Filesystem e Navigazione
 #===============================================================================
-print_step "Configurazione Tappa 1 - Filesystem..."
+print_step "Configurazione Tappa 1"
 
 INDIZIO1_FILE="$REAL_HOME/.treasure_config/mission_briefing.txt"
 
@@ -309,7 +309,7 @@ print_progress "Tappa 1 configurata"
 #===============================================================================
 # TAPPA 2: cat e concatenazione
 #===============================================================================
-print_step "Configurazione Tappa 2 - Concatenazione..."
+print_step "Configurazione Tappa 2"
 
 VAULT_DIR="/opt/treasure_hunt/vault"
 
@@ -399,7 +399,7 @@ print_progress "Tappa 2 configurata"
 #===============================================================================
 # TAPPA 3: Wildcard e Find
 #===============================================================================
-print_step "Configurazione Tappa 3 - Wildcard..."
+print_step "Configurazione Tappa 3"
 
 MATRIX_DIR="/opt/treasure_hunt/matrix"
 
@@ -477,7 +477,7 @@ print_progress "Tappa 3 configurata"
 #===============================================================================
 # TAPPA 4: Permessi
 #===============================================================================
-print_step "Configurazione Tappa 4 - Permessi..."
+print_step "Configurazione Tappa 4"
 
 SECRETS_DIR="/var/log/treasure/secrets"
 
@@ -576,7 +576,7 @@ print_progress "Tappa 4 configurata"
 #===============================================================================
 # TAPPA 5: Processi e Kill
 #===============================================================================
-print_step "Configurazione Tappa 5 - Processi..."
+print_step "Configurazione Tappa 5"
 
 # Salva il percorso della home per lo script del phantom
 PHANTOM_SCRIPT="/tmp/.treasure_phantom_runner.sh"
@@ -728,11 +728,11 @@ PROCESSREADME
 
 chmod 644 /tmp/.treasure_readme_processes.txt
 
-print_progress "Tappa 5 configurata (Phantom PID: $PHANTOM_PID)"
+print_progress "Tappa 5 configurata"
 #===============================================================================
 # TAPPA 6: Grep e Pipe
 #===============================================================================
-print_step "Configurazione Tappa 6 - Grep..."
+print_step "Configurazione Tappa 6"
 
 DATABANK_DIR="/tmp/treasure_workspace/databank"
 
@@ -832,17 +832,17 @@ print_progress "Tappa 6 configurata"
 #===============================================================================
 # TAPPA 7: Unzip (copia file pre-generati - TUTTI E 5!)
 #===============================================================================
-print_step "Configurazione Tappa 7 - Archivi ZIP..."
+print_step "Configurazione Tappa 7"
 
 # Copia TUTTI gli archivi ZIP nella workspace
 cp "$ASSETS_DIR"/*.zip /tmp/treasure_workspace/
 
-print_progress "Tappa 7 configurata (5 archivi ZIP copiati)"
+print_progress "Tappa 7 configurata"
 
 #===============================================================================
 # TAPPA 8: Hash
 #===============================================================================
-print_step "Configurazione Tappa 8 - Hash..."
+print_step "Configurazione Tappa 8"
 
 ARCHIVE_DIR="/opt/treasure_hunt/archive"
 
@@ -934,12 +934,12 @@ Trova il file con questo hash tra i tanti presenti in questa cartella!
 TARGETHASH
 
 
-print_progress "Tappa 8 configurata (Hash target: $TARGET_HASH)"
+print_progress "Tappa 8 configurata"
 
 #===============================================================================
 # TAPPA 9: Backup con ZIP finale
 #===============================================================================
-print_step "Configurazione Tappa 9 - Backup ZIP..."
+print_step "Configurazione Tappa 9"
 
 BACKUP_DIR="/opt/treasure_hunt/backup"
 
@@ -954,7 +954,7 @@ print_progress "Tappa 9 configurata"
 #===============================================================================
 # TAPPA 10: Finale GPG (copia file pre-generato)
 #===============================================================================
-print_step "Configurazione Tappa 10 - Finale GPG..."
+print_step "Configurazione Tappa 10"
 
 FINAL_DIR="/opt/treasure_hunt/final"
 
