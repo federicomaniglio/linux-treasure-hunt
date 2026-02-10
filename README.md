@@ -7,8 +7,7 @@ Benvenuto, aspirante Linux Master!
 1. Apri il terminale
 2. Esegui questi comandi:
 
-```bash
-bash 
+```bash 
 git clone https://github.com/federicomaniglio/linux-treasure-hunt.git
 cd linux-treasure-hunt 
 chmod +x setup.sh 
