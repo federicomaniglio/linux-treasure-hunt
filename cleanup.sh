@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 #===============================================================================
@@ -25,18 +26,28 @@ echo -e "${YELLOW}🧹 Pulizia ambiente Treasure Hunt...${NC}"
 # Killa processi phantom
 pkill -f "treasure_phantom" 2>/dev/null || true
 
-# Rimuovi directory
+# Rimuovi directory principali
 rm -rf /opt/treasure_hunt 2>/dev/null || true
 rm -rf /var/log/treasure 2>/dev/null || true
+rm -rf /var/tmp/treasure_hidden 2>/dev/null || true
+
+# Rimuovi file temporanei
 rm -rf /tmp/treasure_* 2>/dev/null || true
 rm -rf /tmp/extracted 2>/dev/null || true
+rm -rf /tmp/estratti 2>/dev/null || true
 rm -f /tmp/.phantom_process.pid 2>/dev/null || true
 rm -f /tmp/.treasure_phantom_runner.sh 2>/dev/null || true
-rm -rf "$REAL_HOME/.treasure_config" 2>/dev/null || true
-rm -f /etc/phantom_service.log 2>/dev/null || true
+rm -f /tmp/.treasure_readme_processes.txt 2>/dev/null || true
 
-# Rimuovi file password nascosto
-find /var/cache -name ".quantum_cache_*" -delete 2>/dev/null || true
+# Rimuovi cartelle lab create nelle directory di sistema
+rm -rf /bin/lab 2>/dev/null || true
+rm -rf /etc/lab 2>/dev/null || true
+rm -rf /var/lab 2>/dev/null || true
+rm -rf /tmp/lab 2>/dev/null || true
+rm -rf /opt/lab 2>/dev/null || true
+
+# Rimuovi configurazione utente
+rm -rf "$REAL_HOME/.treasure_config" 2>/dev/null || true
 
 echo -e "${GREEN}✅ Pulizia completata!${NC}"
 echo ""

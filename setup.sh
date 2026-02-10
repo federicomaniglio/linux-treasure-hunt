@@ -29,15 +29,15 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Verifica che gli assets esistano (5 ZIP + 1 GPG)
+# Verifica che gli assets esistano (5 ZIP + 1 final_clue.zip + 1 GPG)
 REQUIRED_ZIPS=(
     "backup_system_core.zip"
     "data_dump_node7.zip"
     "encrypted_payload.zip"
     "kernel_snapshot_v2.zip"
     "memory_sector_dump.zip"
+    "final_clue.zip"
 )
-
 MISSING_FILES=()
 
 for zip_file in "${REQUIRED_ZIPS[@]}"; do
@@ -165,7 +165,7 @@ print_progress "Ambiente pulito"
 #-------------------------------------------------------------------------------
 print_step "Creazione struttura directory..."
 
-mkdir -p /opt/treasure_hunt/{vault,archive,matrix,final}
+mkdir -p /opt/treasure_hunt/{vault,archive,matrix,final,backup}
 mkdir -p /var/log/treasure/secrets
 mkdir -p /tmp/treasure_workspace/databank
 mkdir -p "$REAL_HOME/.treasure_config"
@@ -190,68 +190,122 @@ cat > "$INDIZIO1_FILE" << 'INDIZIO1'
 ║                                                                               ║
 ║  Benvenuto, aspirante Linux Master!                                           ║
 ║                                                                               ║
-║  Prima di tutto, devi capire come è organizzato un sistema Linux.             ║
-║  Il filesystem Linux è come un albero rovesciato:                             ║
+║  Il filesystem Linux è organizzato come un albero che parte da "/" (root).    ║
+║  Ogni directory ha uno SCOPO PRECISO:                                         ║
 ║                                                                               ║
 ║                              / (root)                                         ║
 ║                                 │                                             ║
 ║         ┌──────┬──────┬────────┼────────┬──────┬──────┐                       ║
 ║        /bin  /etc   /home     /var    /tmp   /opt   /usr                      ║
 ║                                                                               ║
-║  📁 /bin    → Comandi essenziali (ls, cat, cp...)                             ║
-║  📁 /etc    → File di CONFIGURAZIONE del sistema                              ║
+║  📁 /bin    → Comandi e binari eseguibili essenziali del sistema              ║
+║  📁 /etc    → File di CONFIGURAZIONE (.conf, .cfg, .ini...)                   ║
 ║  📁 /home   → Directory personali degli utenti                                ║
-║  📁 /var    → Dati variabili (log, cache, spool...)                           ║
+║  📁 /var    → Dati variabili: LOG di sistema, cache, spool...                 ║
 ║  📁 /tmp    → File temporanei                                                 ║
-║  📁 /opt    → Software opzionale/aggiuntivo                                   ║
+║  📁 /opt    → Software opzionale                                              ║
 ║  📁 /usr    → Programmi e librerie utente                                     ║
 ║                                                                               ║
 ║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
 ║  🎯 LA TUA MISSIONE:                                                          ║
 ║                                                                               ║
-║  Qualcuno ha messo un file di LOG dove NON dovrebbe stare!                    ║
-║  I file di log appartengono a /var/log, non altrove...                        ║
+║  Qualcuno ha nascosto dei file nel sistema, ma uno di questi è finito        ║
+║  nella directory SBAGLIATA!                                                   ║
+║                                                                               ║
+║  Esplora il filesystem e trova l'intruso. Pensa: che tipo di file            ║
+║  dovrebbe contenere ogni directory?                                           ║
 ║                                                                               ║
 ║  COMANDI UTILI:                                                               ║
-║  • cd <percorso>    → Cambia directory (es: cd /etc)                          ║
-║  • ls               → Lista file nella directory corrente                     ║
-║  • ls -la           → Lista TUTTI i file (anche nascosti) con dettagli       ║
-║  • pwd              → Mostra dove ti trovi                                    ║
-║  • cat <file>       → Mostra contenuto di un file                             ║
-║                                                                               ║
-║  💡 SUGGERIMENTO: Cerca un file .log in una directory dove non dovrebbe       ║
-║     essere... Prova a esplorare /etc!                                         ║
-║                                                                               ║
-║  Usa: ls /etc | grep log                                                      ║
-║       oppure esplora manualmente con cd e ls                                  ║
+║  • cd        → Cambia directory                                               ║
+║  • ls        → Elenca i file                                                  ║
+║  • ls -la    → Elenca TUTTI i file con dettagli                               ║
+║  • pwd       → Mostra la directory corrente                                   ║
+║  • nano file → Apre un file per visualizzarlo/modificarlo (CTRL+X per uscire) ║
 ║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 INDIZIO1
 
-# File fuori posto in /etc
-MISPLACED_FILE="/etc/phantom_service.log"
-cat > "$MISPLACED_FILE" << 'MISPLACED'
+chown $REAL_USER:$REAL_USER "$INDIZIO1_FILE"
+
+# Crea cartelle lab/ in diverse directory di sistema
+
+# /bin/lab/ - script e binari eseguibili (CORRETTI)
+mkdir -p /bin/lab
+cat > /bin/lab/check_system.sh << 'BINSCRIPT'
+#!/bin/bash
+echo "System check: OK"
+BINSCRIPT
+chmod +x /bin/lab/check_system.sh
+cat > /bin/lab/monitor.sh << 'BINSCRIPT2'
+#!/bin/bash
+echo "Monitoring active..."
+BINSCRIPT2
+chmod +x /bin/lab/monitor.sh
+echo '#!/bin/bash' > /bin/lab/helper.sh
+echo 'echo "Helper utility"' >> /bin/lab/helper.sh
+chmod +x /bin/lab/helper.sh
+
+# /etc/lab/ - file di configurazione (CORRETTI) + IL FILE FUORI POSTO
+mkdir -p /etc/lab
+echo "# Database configuration" > /etc/lab/database.conf
+echo "host=localhost" >> /etc/lab/database.conf
+echo "port=5432" >> /etc/lab/database.conf
+echo "# Network settings" > /etc/lab/network.cfg
+echo "interface=eth0" >> /etc/lab/network.cfg
+echo "# System parameters" > /etc/lab/system.ini
+echo "[main]" >> /etc/lab/system.ini
+echo "debug=false" >> /etc/lab/system.ini
+echo "[settings]" > /etc/lab/app_config.conf
+echo "theme=dark" >> /etc/lab/app_config.conf
+
+# IL FILE FUORI POSTO: un .log in /etc/lab/ (dovrebbe essere in /var!)
+cat > "/etc/lab/phantom_service.log" << 'MISPLACED'
 ═══════════════════════════════════════════════════════════════════════════════
 📍 Hai trovato il file fuori posto! Bravo!
 
-Un file .log in /etc? Assurdo! I log vanno in /var/log!
+Un file .log in /etc? I log appartengono a /var!
+Hai capito la struttura del filesystem Linux!
 
 Il prossimo indizio ti aspetta... ma dovrai CONCATENARE per trovarlo!
 
 VAI IN: /opt/treasure_hunt/vault
 
-Lì troverai due file che insieme formano il prossimo indizio.
-I loro nomi iniziano con "frag_" ... ma non è così semplice trovarli!
+In mezzo al caos, c'è sempre qualcuno pronto a darti una mano.
+Basta sapere a chi chiedere... o cosa leggere.
 
 ═══════════════════════════════════════════════════════════════════════════════
 MISPLACED
 
-chown $REAL_USER:$REAL_USER "$INDIZIO1_FILE"
-chmod 644 "$MISPLACED_FILE"
+# /var/lab/ - file di log e dati variabili (CORRETTI)
+mkdir -p /var/lab
+echo "[2024-01-15 10:23:45] System started" > /var/lab/system.log
+echo "[2024-01-15 10:24:12] Service initialized" >> /var/lab/system.log
+echo "[2024-01-15 10:30:00] Backup completed" > /var/lab/backup.log
+echo "[2024-01-15 11:00:00] Scheduled task executed" >> /var/lab/backup.log
+echo "cache_data_block_001" > /var/lab/cache.dat
+echo "spool_queue_entry" > /var/lab/spool.dat
+
+# /tmp/lab/ - file temporanei (CORRETTI)
+mkdir -p /tmp/lab
+echo "temporary data 12345" > /tmp/lab/session_001.tmp
+echo "swap buffer content" > /tmp/lab/buffer.tmp
+echo "processing queue" > /tmp/lab/process_queue.tmp
+echo "temp calculation result" > /tmp/lab/calc.tmp
+
+# /opt/lab/ - software opzionale (CORRETTI)
+mkdir -p /opt/lab
+echo "#!/bin/bash" > /opt/lab/custom_tool.sh
+echo "echo 'Custom Lab Tool v1.0'" >> /opt/lab/custom_tool.sh
+chmod +x /opt/lab/custom_tool.sh
+echo "Application data v1.0" > /opt/lab/app_data.dat
+echo "Plugin configuration" > /opt/lab/plugin.dat
+
+# Imposta permessi
+chmod 755 /bin/lab /etc/lab /var/lab /tmp/lab /opt/lab
+chmod 644 /etc/lab/* /var/lab/* /tmp/lab/* /opt/lab/*.dat
 
 print_progress "Tappa 1 configurata"
-
 #===============================================================================
 # TAPPA 2: cat e concatenazione
 #===============================================================================
@@ -261,8 +315,9 @@ VAULT_DIR="/opt/treasure_hunt/vault"
 
 create_decoy_files "$VAULT_DIR" 80
 
-FRAG1_NAME="frag_$(generate_filename | cut -d'.' -f1).dat"
-FRAG2_NAME="frag_$(generate_filename | cut -d'.' -f1).dat"
+# Genera nomi per i frammenti (con prefisso fragment_ in inglese)
+FRAG1_NAME="fragment_$(generate_filename | cut -d'.' -f1).dat"
+FRAG2_NAME="fragment_$(generate_filename | cut -d'.' -f1).dat"
 
 # Assicuriamoci che siano in ordine alfabetico corretto
 if [[ "$FRAG1_NAME" > "$FRAG2_NAME" ]]; then
@@ -273,45 +328,71 @@ fi
 
 cat > "$VAULT_DIR/$FRAG1_NAME" << 'FRAG1'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║                         🐧 MISSIONE LINUX - INDIZIO 2                         ║
+║                              FRAMMENTO 1 di 2                                 ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
-║  Il comando CAT (concatenate) è uno dei più usati in Linux!                   ║
+║  Ottimo lavoro! Hai trovato e concatenato i frammenti!                        ║
 ║                                                                               ║
-║  UTILIZZI PRINCIPALI:                                                         ║
-║  • cat file.txt           → Mostra il contenuto di un file                    ║
-║  • cat file1 file2        → Mostra il contenuto di più file in sequenza       ║
-║  • cat file1 file2 > new  → Concatena e salva in un nuovo file                ║
+║  Ricorda: CAT è utilissimo anche per leggere file velocemente.                ║
+║  Invece di aprire nano o un editor, basta: cat nomefile                       ║
 ║                                                                               ║
-║  Il nome "cat" viene da "concatenate" (concatenare), perché permette          ║
-║  di unire più file insieme!                                                   ║
+║  Puoi anche concatenare con le wildcard:                                      ║
+║  • cat fragment*   → Concatena tutti i file che iniziano con "fragment"       ║
+║  • cat *.log       → Concatena tutti i file .log                              ║
 ║                                                                               ║
 FRAG1
 
 cat > "$VAULT_DIR/$FRAG2_NAME" << 'FRAG2'
+║                                                                               ║
 ║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
-║  🎯 HAI CONCATENATO CORRETTAMENTE!                                            ║
+║  🎯 PROSSIMA DESTINAZIONE:                                                    ║
 ║                                                                               ║
-║  Il prossimo indizio richiede di usare le WILDCARD e il comando FIND!         ║
+║  "Welcome to the Matrix, Neo..."                                              ║
 ║                                                                               ║
-║  VAI IN: /opt/treasure_hunt/matrix                                            ║
+║  La prossima sfida ti attende in /opt/treasure_hunt/matrix                    ║
 ║                                                                               ║
-║  Lì ci sono molti file. Alcuni hanno nomi che, messi insieme, formano         ║
-║  il percorso del prossimo indizio. Cerca i file che iniziano con "path_"      ║
-║  e ordina i loro nomi per trovare la strada!                                  ║
-║                                                                               ║
-║  USA: ls path_* oppure find . -name "path_*" | sort                           ║
+║  Lì dovrai usare le WILDCARD per trovare dei file speciali.                   ║
+║  Il loro contenuto, messo insieme, rivelerà il percorso successivo.           ║
 ║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 FRAG2
 
-cat > "$VAULT_DIR/README_vault.txt" << HINT
-Questa directory contiene molti file...
-Due di loro iniziano con "frag_" e vanno concatenati con: cat frag_* 
-Ma attenzione all'ORDINE! Usa: ls frag_* | sort  per vedere l'ordine giusto
-poi: cat \$(ls frag_* | sort)
-HINT
+cat > "$VAULT_DIR/README_vault.txt" << 'VAULTREADME'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                         🐧 MISSIONE LINUX - INDIZIO 2                         ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  Benvenuto nel VAULT! Qui imparerai il comando CAT.                           ║
+║                                                                               ║
+║  CAT (da "concatenate") è uno dei comandi più versatili di Linux:             ║
+║  • cat file          → Mostra velocemente il contenuto di un file             ║
+║  • cat file1 file2   → Mostra i file UNO DOPO L'ALTRO (concatenati)           ║
+║  • cat *.txt         → Mostra tutti i file .txt concatenati                   ║
+║                                                                               ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
+║                                                                               ║
+║  LE PIPE ( | ):                                                               ║
+║  Il simbolo | (pipe) collega l'OUTPUT di un comando all'INPUT di un altro.    ║
+║                                                                               ║
+║  Esempio: ls | sort                                                           ║
+║  → ls elenca i file, sort li ordina alfabeticamente                           ║
+║                                                                               ║
+║  Esempio: ls *.dat | sort                                                     ║
+║  → Elenca solo i .dat e li ordina                                             ║
+║                                                                               ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
+║                                                                               ║
+║  🎯 LA TUA MISSIONE:                                                          ║
+║                                                                               ║
+║  In questa cartella ci sono molti file, ma due di essi sono "fragments"       ║
+║  (frammenti) di un messaggio spezzato in due parti.                           ║
+║                                                                               ║
+║  Il messaggio completo si ottiene CONCATENANDO i due frammenti nell'ordine    ║
+║  alfabetico corretto. Trova i frammenti, ordinali e uniscili con cat!         ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+VAULTREADME
 
 print_progress "Tappa 2 configurata"
 
@@ -324,19 +405,21 @@ MATRIX_DIR="/opt/treasure_hunt/matrix"
 
 create_decoy_files "$MATRIX_DIR" 100
 
-cat > "$MATRIX_DIR/path_1_alpha.txt" << 'EOF'
+# File che contengono le parti del percorso (nomi che NON rivelano l'ordine facilmente)
+# Devono ordinarli loro per capire la sequenza
+cat > "$MATRIX_DIR/coordinate_alpha.txt" << 'EOF'
 /var
 EOF
 
-cat > "$MATRIX_DIR/path_2_beta.txt" << 'EOF'
+cat > "$MATRIX_DIR/coordinate_beta.txt" << 'EOF'
 /log
 EOF
 
-cat > "$MATRIX_DIR/path_3_gamma.txt" << 'EOF'
+cat > "$MATRIX_DIR/coordinate_gamma.txt" << 'EOF'
 /treasure
 EOF
 
-cat > "$MATRIX_DIR/path_4_delta.txt" << 'EOF'
+cat > "$MATRIX_DIR/coordinate_delta.txt" << 'EOF'
 /secrets
 EOF
 
@@ -345,40 +428,52 @@ cat > "$MATRIX_DIR/README_matrix.txt" << 'MATRIXREADME'
 ║                         🐧 MISSIONE LINUX - INDIZIO 3                         ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
-║  Le WILDCARD sono caratteri speciali che rappresentano altri caratteri:       ║
+║  "Benvenuto nella Matrix. Qui imparerai a vedere oltre il codice..."          ║
 ║                                                                               ║
-║  • *     → Rappresenta QUALSIASI sequenza di caratteri (anche vuota)          ║
-║  • ?     → Rappresenta UN SINGOLO carattere qualsiasi                         ║
-║  • [abc] → Rappresenta UNO dei caratteri tra parentesi                        ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
-║  ESEMPI:                                                                      ║
-║  • ls *.txt        → Tutti i file che finiscono con .txt                      ║
-║  • ls file?.dat    → file1.dat, fileA.dat, ma NON file12.dat                  ║
-║  • ls [abc]*       → Tutti i file che iniziano con a, b, o c                  ║
+║  LE WILDCARD (caratteri jolly):                                               ║
+║  Permettono di selezionare più file con un solo comando!                      ║
 ║                                                                               ║
-║  IL COMANDO FIND:                                                             ║
-║  • find /percorso -name "pattern"    → Cerca file per nome                    ║
-║  • find . -name "*.txt"              → Cerca tutti i .txt da qui in giù       ║
+║  • *        → Qualsiasi sequenza di caratteri (anche vuota)                   ║
+║              ls *.txt      → tutti i file .txt                                ║
+║              ls data*      → tutti i file che iniziano con "data"             ║
+║                                                                               ║
+║  • ?        → Esattamente UN carattere qualsiasi                              ║
+║              ls file?.txt  → file1.txt, fileA.txt (ma NON file12.txt)         ║
+║                                                                               ║
+║  • [abc]    → Uno dei caratteri specificati                                   ║
+║              ls file[123].txt → file1.txt, file2.txt, file3.txt               ║
+║                                                                               ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
+║                                                                               ║
+║  IL COMANDO FIND - Cerca file nel filesystem:                                 ║
+║                                                                               ║
+║  • find /percorso -name "pattern"                                             ║
+║    → Cerca file con quel nome nel percorso specificato                        ║
+║                                                                               ║
+║  • find . -name "*.conf"                                                      ║
+║    → Cerca tutti i .conf dalla directory corrente in giù                      ║
+║                                                                               ║
+║  • find /home -name "report*"                                                 ║
+║    → Cerca file che iniziano con "report" in /home                            ║
 ║                                                                               ║
 ║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
 ║  🎯 LA TUA MISSIONE:                                                          ║
 ║                                                                               ║
-║  In questa directory ci sono file che iniziano con "path_".                   ║
-║  Ognuno contiene UNA PARTE del percorso verso il prossimo indizio!            ║
+║  In questa cartella ci sono dei file "coordinate" nascosti tra tanti altri.   ║
+║  Ognuno contiene un PEZZO di un percorso di sistema.                          ║
 ║                                                                               ║
-║  1. Trova tutti i file: ls path_*                                             ║
-║  2. Ordinali: ls path_* | sort                                                ║
-║  3. Leggi il contenuto in ordine: cat $(ls path_* | sort)                     ║
-║  4. Unisci le parti per ottenere il percorso!                                 ║
+║  Unendo i contenuti nell'ORDINE ALFABETICO dei nomi dei file,                 ║
+║  otterrai il percorso della prossima destinazione.                            ║
 ║                                                                               ║
-║  💡 Il percorso risultante ti porterà alla prossima sfida!                    ║
+║  Usa le wildcard per trovarli e cat per leggerne il contenuto!                ║
 ║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 MATRIXREADME
 
 print_progress "Tappa 3 configurata"
-
 #===============================================================================
 # TAPPA 4: Permessi
 #===============================================================================
@@ -388,31 +483,34 @@ SECRETS_DIR="/var/log/treasure/secrets"
 
 create_decoy_files "$SECRETS_DIR" 50
 
+# Il file con l'indizio (nome randomico, permessi 000)
 INDIZIO4_NAME=$(generate_filename)
 cat > "$SECRETS_DIR/$INDIZIO4_NAME" << 'INDIZIO4'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║                         🐧 MISSIONE LINUX - INDIZIO 5                         ║
+║                              🔓 FILE SBLOCCATO!                               ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
-║  🎉 HAI SBLOCCATO IL FILE! Ottimo lavoro con i permessi!                      ║
+║  Ottimo lavoro con i permessi! Ora sai come funziona la sicurezza in Linux.   ║
 ║                                                                               ║
-║  Ora è il momento di investigare i PROCESSI del sistema...                    ║
+║  Ricorda la notazione ottale:                                                 ║
+║  • 7 = rwx (4+2+1)  → lettura + scrittura + esecuzione                        ║
+║  • 6 = rw- (4+2)    → lettura + scrittura                                     ║
+║  • 5 = r-x (4+1)    → lettura + esecuzione                                    ║
+║  • 4 = r-- (4)      → solo lettura                                            ║
+║  • 0 = --- (0)      → nessun permesso                                         ║
 ║                                                                               ║
-║  Installa HTOP per una visualizzazione migliore:                              ║
-║  → sudo apt update && sudo apt install htop -y                                ║
+║  Esempio: chmod 755 file → rwxr-xr-x                                          ║
+║           chmod 644 file → rw-r--r--                                          ║
 ║                                                                               ║
-║  Un processo MISTERIOSO sta girando in background sul sistema!                ║
-║  Il suo PID è salvato in: /tmp/.phantom_process.pid                           ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
-║  1. Leggi il PID: cat /tmp/.phantom_process.pid                               ║
-║  2. Verifica il processo: ps aux | grep <PID>                                 ║
-║     oppure cercalo in htop                                                    ║
-║  3. Termina il processo: kill <PID>                                           ║
-║  4. Controlla i LOG in /var/log/treasure/ per il prossimo indizio!            ║
+║  🎯 PROSSIMA SFIDA: I PROCESSI                                                ║
 ║                                                                               ║
-║  💡 Il comando KILL invia segnali ai processi.                                ║
-║     kill <PID>      → Termina gentilmente (SIGTERM)                           ║
-║     kill -9 <PID>   → Termina forzatamente (SIGKILL)                          ║
+║  C'è un processo fantasma in esecuzione su questo sistema...                  ║
+║                                                                               ║
+║  VAI IN: /tmp                                                                 ║
+║                                                                               ║
+║  Cerca un file che inizia con un punto (file nascosto!) e leggi le istruzioni.║
 ║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 INDIZIO4
@@ -424,73 +522,120 @@ cat > "/var/log/treasure/secrets/README_secrets.txt" << 'PERMREADME'
 ║                         🐧 MISSIONE LINUX - INDIZIO 4                         ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
-║  I PERMESSI in Linux controllano chi può fare cosa con i file!                ║
+║  I PERMESSI in Linux: il sistema di sicurezza fondamentale!                   ║
 ║                                                                               ║
-║  Ogni file ha 3 tipi di permessi per 3 categorie:                             ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
-║  TIPI:        r (read)    → Leggere il file                                   ║
-║               w (write)   → Modificare il file                                ║
-║               x (execute) → Eseguire il file                                  ║
+║  Ogni file ha 3 TIPI di permessi:                                             ║
+║  • r (read)    → Permette di LEGGERE il contenuto                             ║
+║  • w (write)   → Permette di MODIFICARE il file                               ║
+║  • x (execute) → Permette di ESEGUIRE il file (se è uno script/programma)     ║
 ║                                                                               ║
-║  CATEGORIE:   u (user)    → Il proprietario                                   ║
-║               g (group)   → Il gruppo                                         ║
-║               o (others)  → Tutti gli altri                                   ║
+║  E 3 CATEGORIE di utenti:                                                     ║
+║  • u (user)    → Il PROPRIETARIO del file                                     ║
+║  • g (group)   → Gli utenti del GRUPPO del file                               ║
+║  • o (others)  → TUTTI GLI ALTRI                                              ║
 ║                                                                               ║
-║  ESEMPIO: -rwxr-xr--                                                          ║
-║           │└┬┘└┬┘└┬┘                                                          ║
-║           │ │  │  └── others: r-- (solo lettura)                              ║
-║           │ │  └───── group:  r-x (lettura + esecuzione)                      ║
-║           │ └──────── user:   rwx (tutti i permessi)                          ║
-║           └────────── tipo di file (- = file normale)                         ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
-║  COMANDI:                                                                     ║
-║  • ls -la              → Mostra i permessi                                    ║
-║  • chmod +r file       → Aggiunge permesso di lettura                         ║
-║  • chmod u+rwx file    → Aggiunge tutti i permessi al proprietario            ║
-║  • chmod 644 file      → Imposta permessi in notazione ottale                 ║
+║  COME LEGGERE I PERMESSI:                                                     ║
+║                                                                               ║
+║  Quando fai "ls -la" vedi qualcosa tipo: -rwxr-xr--                           ║
+║                                                                               ║
+║     -    rwx    r-x    r--                                                    ║
+║     │     │      │      │                                                     ║
+║     │     │      │      └── others: può solo leggere                          ║
+║     │     │      └───────── group: può leggere ed eseguire                    ║
+║     │     └──────────────── user: può fare tutto                              ║
+║     └────────────────────── tipo (- = file, d = directory)                    ║
+║                                                                               ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
+║                                                                               ║
+║  IL COMANDO CHMOD - Cambia i permessi:                                        ║
+║                                                                               ║
+║  Sintassi simbolica:                                                          ║
+║  • chmod +r file     → Aggiunge lettura a tutti                               ║
+║  • chmod u+x file    → Aggiunge esecuzione al proprietario                    ║
+║  • chmod go-w file   → Rimuove scrittura a group e others                     ║
+║                                                                               ║
+║  Sintassi ottale (numeri):                                                    ║
+║  • chmod 644 file    → rw-r--r-- (comune per file)                            ║
+║  • chmod 755 file    → rwxr-xr-x (comune per script)                          ║
+║  • chmod 600 file    → rw------- (file privato)                               ║
 ║                                                                               ║
 ║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
 ║  🎯 LA TUA MISSIONE:                                                          ║
 ║                                                                               ║
-║  In questa directory c'è un file che NON puoi leggere (permessi 000).         ║
-║  Devi trovarlo e sbloccare i permessi di lettura!                             ║
-║                                                                               ║
-║  1. Elenca i file con dettagli: ls -la                                        ║
-║  2. Cerca quello con "----------" (nessun permesso)                           ║
-║  3. Aggiungi il permesso di lettura: sudo chmod +r <nomefile>                 ║
-║  4. Leggi il contenuto: cat <nomefile>                                        ║
+║  Tra i tanti file in questa directory, ce n'è uno "blindato"!                 ║
 ║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 PERMREADME
 
 print_progress "Tappa 4 configurata"
-
 #===============================================================================
 # TAPPA 5: Processi e Kill
 #===============================================================================
 print_step "Configurazione Tappa 5 - Processi..."
 
+# Salva il percorso della home per lo script del phantom
 PHANTOM_SCRIPT="/tmp/.treasure_phantom_runner.sh"
-cat > "$PHANTOM_SCRIPT" << 'PHANTOM'
+cat > "$PHANTOM_SCRIPT" << PHANTOM
 #!/bin/bash
 
 LOG_FILE="/var/log/treasure/phantom_output.log"
+PASSWORD_FILE="$REAL_HOME/.treasure_config/.final_secret"
 
 cleanup() {
-    echo "" >> "$LOG_FILE"
-    echo "═══════════════════════════════════════════════════════════════════════════════" >> "$LOG_FILE"
-    echo "📍 PROCESSO TERMINATO! Hai trovato l'indizio!" >> "$LOG_FILE"
-    echo "" >> "$LOG_FILE"
-    echo "Il prossimo indizio richiede di usare GREP con le PIPE!" >> "$LOG_FILE"
-    echo "" >> "$LOG_FILE"
-    echo "VAI IN: /tmp/treasure_workspace/databank" >> "$LOG_FILE"
-    echo "" >> "$LOG_FILE"
-    echo "Lì troverai MOLTI file. Devi cercare quello che CONTIENE" >> "$LOG_FILE"
-    echo "la parola 'NEXUS' al suo interno!" >> "$LOG_FILE"
-    echo "" >> "$LOG_FILE"
-    echo "USA: grep -l \"NEXUS\" * oppure grep -r \"NEXUS\" ." >> "$LOG_FILE"
-    echo "═══════════════════════════════════════════════════════════════════════════════" >> "$LOG_FILE"
+    # Crea il file con la password nella cartella dell'indizio 1
+    echo "" > "\$PASSWORD_FILE"
+    echo "╔═══════════════════════════════════════════════════════════════════════════════╗" >> "\$PASSWORD_FILE"
+    echo "║                        🔑 MESSAGGIO DAL FANTASMA                              ║" >> "\$PASSWORD_FILE"
+    echo "╠═══════════════════════════════════════════════════════════════════════════════╣" >> "\$PASSWORD_FILE"
+    echo "║                                                                               ║" >> "\$PASSWORD_FILE"
+    echo "║  Mi hai trovato e ucciso... ma ti lascio un regalo!                           ║" >> "\$PASSWORD_FILE"
+    echo "║                                                                               ║" >> "\$PASSWORD_FILE"
+    echo "║  La password per decriptare il messaggio finale è:                            ║" >> "\$PASSWORD_FILE"
+    echo "║                                                                               ║" >> "\$PASSWORD_FILE"
+    echo "║                         I love TPSIT                                          ║" >> "\$PASSWORD_FILE"
+    echo "║                                                                               ║" >> "\$PASSWORD_FILE"
+    echo "║  Conservala bene, ti servirà alla fine del viaggio!                           ║" >> "\$PASSWORD_FILE"
+    echo "║                                                                               ║" >> "\$PASSWORD_FILE"
+    echo "╚═══════════════════════════════════════════════════════════════════════════════╝" >> "\$PASSWORD_FILE"
+    chmod 644 "\$PASSWORD_FILE"
+    chown $REAL_USER:$REAL_USER "\$PASSWORD_FILE"
+
+    # Scrive anche il log normale
+    echo "" >> "\$LOG_FILE"
+    echo "╔═══════════════════════════════════════════════════════════════════════════════╗" >> "\$LOG_FILE"
+    echo "║                     🎯 PROCESSO FANTASMA TERMINATO!                           ║" >> "\$LOG_FILE"
+    echo "╠═══════════════════════════════════════════════════════════════════════════════╣" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  Ottimo lavoro! Hai usato htop per trovare il processo e l'hai terminato!     ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  ═══════════════════════════════════════════════════════════════════════════  ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  ALTRI COMANDI UTILI PER GESTIRE I PROCESSI:                                  ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  • ps                → Processi della sessione corrente                       ║" >> "\$LOG_FILE"
+    echo "║  • ps aux            → TUTTI i processi del sistema                           ║" >> "\$LOG_FILE"
+    echo "║  • ps aux | grep X   → Filtra i processi cercando \"X\"                        ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  IL COMANDO KILL - Termina un processo:                                       ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  • kill <PID>        → Chiede gentilmente al processo di terminare (SIGTERM)  ║" >> "\$LOG_FILE"
+    echo "║  • kill -9 <PID>     → Forza la terminazione immediata (SIGKILL)              ║" >> "\$LOG_FILE"
+    echo "║  • killall <nome>    → Termina tutti i processi con quel nome                 ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  In htop puoi anche terminare processi direttamente con F9 (Kill)!            ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  ═══════════════════════════════════════════════════════════════════════════  ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  🎯 PROSSIMA SFIDA:                                                           ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "║  Vai in: /tmp/treasure_workspace/databank                                     ║" >> "\$LOG_FILE"
+    echo "║                                                                               ║" >> "\$LOG_FILE"
+    echo "╚═══════════════════════════════════════════════════════════════════════════════╝" >> "\$LOG_FILE"
     exit 0
 }
 
@@ -509,8 +654,81 @@ PHANTOM_PID=$!
 echo "$PHANTOM_PID" > /tmp/.phantom_process.pid
 chmod 644 /tmp/.phantom_process.pid
 
-print_progress "Tappa 5 configurata (Phantom PID: $PHANTOM_PID)"
 
+
+# Crea un README per i processi in /tmp (file nascosto)
+cat > "/tmp/.treasure_readme_processes.txt" << 'PROCESSREADME'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                         🐧 MISSIONE LINUX - INDIZIO 5                         ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  FILE NASCOSTI IN LINUX:                                                      ║
+║  I file che iniziano con un punto (.) sono nascosti!                          ║
+║  Per vederli serve: ls -la (la "a" sta per "all")                             ║
+║                                                                               ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
+║                                                                               ║
+║  IL PACKAGE MANAGER APT: installa software su Linux!                          ║
+║                                                                               ║
+║  APT (Advanced Package Tool) è il gestore pacchetti di Debian/Ubuntu/Raspbian ║
+║  Permette di installare, aggiornare e rimuovere programmi facilmente.         ║
+║                                                                               ║
+║  COMANDI PRINCIPALI:                                                          ║
+║                                                                               ║
+║  • sudo apt update           → Aggiorna la lista dei pacchetti disponibili    ║
+║                                (da fare SEMPRE prima di installare!)          ║
+║                                                                               ║
+║  • sudo apt install <nome>   → Installa un programma                          ║
+║    Esempio: sudo apt install htop                                             ║
+║                                                                               ║
+║  • sudo apt remove <nome>    → Rimuove un programma                           ║
+║                                                                               ║
+║  • sudo apt upgrade          → Aggiorna TUTTI i programmi installati          ║
+║                                                                               ║
+║  • apt search <parola>       → Cerca programmi per nome/descrizione           ║
+║                                                                               ║
+║  • apt show <nome>           → Mostra informazioni su un pacchetto            ║
+║                                                                               ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
+║                                                                               ║
+║  HTOP - Monitor processi interattivo:                                         ║
+║                                                                               ║
+║  htop è una versione migliorata di "top", mostra i processi in tempo reale    ║
+║  con un'interfaccia colorata e interattiva.                                   ║
+║                                                                               ║
+║  COMANDI IN HTOP:                                                             ║
+║  • Frecce ↑↓     → Naviga tra i processi                                      ║
+║  • F3 o /        → CERCA un processo per nome                                 ║
+║  • F9            → Termina (kill) il processo selezionato                     ║
+║  • F10 o q       → Esci da htop                                               ║
+║  • F6            → Ordina per colonna                                         ║
+║                                                                               ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
+║                                                                               ║
+║  🎯 LA TUA MISSIONE:                                                          ║
+║                                                                               ║
+║  Un processo misterioso chiamato "treasure_phantom_process" è in esecuzione!  ║
+║                                                                               ║
+║  1. Installa htop se non è presente:                                          ║
+║     → sudo apt update                                                         ║
+║     → sudo apt install htop -y                                                ║
+║                                                                               ║
+║  2. Avvia htop:                                                               ║
+║     → htop                                                                    ║
+║                                                                               ║
+║  3. Cerca il processo "treasure_phantom" (usa F3 o /)                         ║
+║                                                                               ║
+║  4. Selezionalo e terminalo con F9, poi scegli SIGTERM (15)                   ║
+║                                                                               ║
+║  5. Esci da htop (q) e controlla cosa è apparso in /var/log/treasure/         ║
+║     Il processo fantasma scrive un LOG quando viene terminato!                ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+PROCESSREADME
+
+chmod 644 /tmp/.treasure_readme_processes.txt
+
+print_progress "Tappa 5 configurata (Phantom PID: $PHANTOM_PID)"
 #===============================================================================
 # TAPPA 6: Grep e Pipe
 #===============================================================================
@@ -520,13 +738,26 @@ DATABANK_DIR="/tmp/treasure_workspace/databank"
 
 create_decoy_files "$DATABANK_DIR" 120
 
-NEXUS_FILE="$DATABANK_DIR/$(generate_filename)"
-cat > "$NEXUS_FILE" << 'NEXUS'
+# File "pagliaio" che contiene solo la parola chiave e il percorso dell'indizio 7
+# Lo mettiamo in una cartella diversa così non trovano subito l'indizio con grep
+mkdir -p /var/tmp/treasure_hidden
+
+PAGLIAIO_FILE="$DATABANK_DIR/$(generate_filename)"
+cat > "$PAGLIAIO_FILE" << 'PAGLIAIO'
+pagliaio
+
+Hai trovato l'ago! 🪡
+
+Vai su: /var/tmp/treasure_hidden/
+PAGLIAIO
+
+# L'indizio 7 vero e proprio, in una cartella separata
+cat > "/var/tmp/treasure_hidden/indizio7.txt" << 'INDIZIO7'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║                         🐧 MISSIONE LINUX - INDIZIO 7                         ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
-║  NEXUS TROVATO! Ottimo uso di grep!                                           ║
+║  🪡 AGO TROVATO NEL PAGLIAIO! Ottimo uso di grep!                             ║
 ║                                                                               ║
 ║  Ora devi ESTRARRE dei file compressi!                                        ║
 ║                                                                               ║
@@ -553,13 +784,21 @@ cat > "$NEXUS_FILE" << 'NEXUS'
 ║  💡 Cerca file di testo con: find /tmp/estratti -name "*.txt" -o -name "*.cfg"║
 ║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
-NEXUS
+INDIZIO7
+
 cat > "$DATABANK_DIR/README_databank.txt" << 'GREPREADME'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║                         🐧 MISSIONE LINUX - INDIZIO 6                         ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
-║  GREP è uno strumento POTENTISSIMO per cercare testo nei file!                ║
+║  GREP: Ricerca nei file                                                       ║
+║                                                                               ║
+║  Immagina di avere migliaia di file e dover trovare quello che contiene       ║
+║  una parola specifica... impossibile farlo a mano!                            ║
+║                                                                               ║
+║  GREP è lo strumento perfetto: cerca testo dentro i file!                     ║
+║                                                                               ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
 ║  SINTASSI BASE:                                                               ║
 ║  • grep "pattern" file      → Cerca "pattern" nel file                        ║
@@ -567,6 +806,8 @@ cat > "$DATABANK_DIR/README_databank.txt" << 'GREPREADME'
 ║  • grep -r "pattern" .      → Cerca RICORSIVAMENTE in tutte le subdirectory   ║
 ║  • grep -l "pattern" *      → Mostra solo i NOMI dei file che contengono      ║
 ║  • grep -i "pattern" file   → Ricerca case-INSENSITIVE                        ║
+║                                                                               ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
 ║                                                                               ║
 ║  LE PIPE ( | ):                                                               ║
 ║  Le pipe connettono l'output di un comando all'input di un altro!             ║
@@ -580,10 +821,8 @@ cat > "$DATABANK_DIR/README_databank.txt" << 'GREPREADME'
 ║                                                                               ║
 ║  🎯 LA TUA MISSIONE:                                                          ║
 ║                                                                               ║
-║  In questa directory c'è UN file che contiene la parola "NEXUS".              ║
-║  Trovalo usando grep!                                                         ║
-║                                                                               ║
-║  USA: grep -l "NEXUS" *                                                       ║
+║  In questa directory ci sono oltre 100 file...                                ║
+║  è come cercare un ago in un pagilaio 🪡                                      ║
 ║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 GREPREADME
@@ -607,82 +846,108 @@ print_step "Configurazione Tappa 8 - Hash..."
 
 ARCHIVE_DIR="/opt/treasure_hunt/archive"
 
-create_decoy_files "$ARCHIVE_DIR" 60
+# Contenuto base per i file DECOY (senza indicazioni sulla prossima tappa)
+DECOY_CONTENT='╔═══════════════════════════════════════════════════════════════════════════════╗
+║                         🐧 MISSIONE LINUX - INDIZIO 9                         ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  ❌ Questo non è il file che cerchi...                                        ║
+║                                                                               ║
+║  L'"'"'hash non corrisponde! Continua a cercare.                                  ║
+║                                                                               ║
+║  Ricorda: ogni file ha un'"'"'impronta digitale unica.                            ║
+║  Solo quello con l'"'"'hash giusto contiene le istruzioni!                        ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝'
 
+# Genera 59 file DECOY
+for i in $(seq 1 59); do
+    DECOY_NAME=$(generate_filename)
+    while [[ -f "$ARCHIVE_DIR/$DECOY_NAME" ]]; do
+        DECOY_NAME=$(generate_filename)
+    done
+    echo "$DECOY_CONTENT" > "$ARCHIVE_DIR/$DECOY_NAME"
+    # Aggiunge un numero finale per rendere ogni hash diverso
+    echo "$i" >> "$ARCHIVE_DIR/$DECOY_NAME"
+done
+
+# IL FILE VERO - con le istruzioni complete per la prossima tappa
 HASH_INDIZIO_FILE="$ARCHIVE_DIR/$(generate_filename)"
+while [[ -f "$HASH_INDIZIO_FILE" ]]; do
+    HASH_INDIZIO_FILE="$ARCHIVE_DIR/$(generate_filename)"
+done
+
 cat > "$HASH_INDIZIO_FILE" << 'HASHINDIZIO'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║                         🐧 MISSIONE LINUX - INDIZIO 9                         ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
-║  🎉 HASH CORRETTO! Sei quasi alla fine!                                       ║
+║  ❌ Questo non è il file che cerchi...                                         ║
+║  o forse si?                                                                  ║
+║  Spostati in: /opt/treasure_hunt/backup                                       ║
 ║                                                                               ║
-║  La penultima sfida: trovare la PASSWORD per l'indizio finale!                ║
+║  L'"'"'hash non corrisponde! Continua a cercare.                              ║
 ║                                                                               ║
-║  Da qualche parte nel sistema c'è un file che contiene una password...        ║
-║  È nascosto bene! Usa tutto quello che hai imparato:                          ║
-║                                                                               ║
-║  • find per cercare file                                                      ║
-║  • grep per cercare contenuti                                                 ║
-║                                                                               ║
-║  💡 SUGGERIMENTO: La password è in un file che contiene "QUANTUM_KEY"         ║
-║     Cerca in tutto il sistema: sudo grep -r "QUANTUM_KEY" / 2>/dev/null       ║
-║     (il 2>/dev/null nasconde gli errori di permesso)                          ║
-║                                                                               ║
-║  Una volta trovata la password, vai in: /opt/treasure_hunt/final              ║
-║                                                                               ║
-║  Lì c'è un file .gpg da decriptare con:                                       ║
-║  → gpg -d final_mission.gpg                                                   ║
+║  Ricorda: ogni file ha un'"'"'impronta digitale unica.                        ║
+║  Solo quello con l'"'"'hash giusto contiene le istruzioni!                    ║
 ║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 HASHINDIZIO
 
 TARGET_HASH=$(md5sum "$HASH_INDIZIO_FILE" | cut -d' ' -f1)
 
-cat > "$ARCHIVE_DIR/target_hash.txt" << TARGETHASH
+cat > "$ARCHIVE_DIR/README_archive.txt" << 'ARCHIVEREADME'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║                     🔐 SFIDA HASH - TROVA IL FILE!                            ║
+║                         🐧 MISSIONE LINUX - INDIZIO 8                         ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
-║  L'hash MD5 del file che cerchi è:                                            ║
+║  GLI HASH: impronte digitali dei file!                                        ║
 ║                                                                               ║
-║  → $TARGET_HASH                                                ║
+║  Ogni file ha un HASH unico - una stringa di caratteri che lo identifica.     ║
+║  Se anche un solo byte cambia, l'hash sarà completamente diverso!             ║
 ║                                                                               ║
-║  Uno dei file in questa directory ha questo hash.                             ║
-║  Trovalo!                                                                     ║
+║  Questo è utile per:                                                          ║
+║  • Verificare che un download non sia corrotto                                ║
+║  • Controllare se due file sono identici                                      ║
+║  • Trovare un file specifico tra tanti                                        ║
 ║                                                                               ║
-║  COMANDO: md5sum * 2>/dev/null | grep "$TARGET_HASH"           ║
+║  ═══════════════════════════════════════════════════════════════════════════  ║
+║                                                                               ║
+║  🎯 LA TUA MISSIONE:                                                          ║
+║                                                                               ║
+║  In questa cartella ci sono 60 file che SEMBRANO simili...                    ║
+║  Ma uno solo ha l'hash che cerchi!                                            ║
+║                                                                               ║
+║  L'hash del file che contiene il prossimo indizio è in: target_hash.txt       ║
+║                                                                               ║
+║  Come trovarlo? Devi calcolare l'hash di ogni file e confrontare!             ║
 ║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
+ARCHIVEREADME
+
+cat > "$ARCHIVE_DIR/target_hash.txt" << TARGETHASH
+L'hash MD5 del file che cerchi è:
+
+$TARGET_HASH
+
+Trova il file con questo hash tra i tanti presenti in questa cartella!
 TARGETHASH
 
-print_progress "Tappa 8 configurata"
+
+print_progress "Tappa 8 configurata (Hash target: $TARGET_HASH)"
 
 #===============================================================================
-# TAPPA 9: Trova Password
+# TAPPA 9: Backup con ZIP finale
 #===============================================================================
-print_step "Configurazione Tappa 9 - Password nascosta..."
+print_step "Configurazione Tappa 9 - Backup ZIP..."
 
-PASSWORD_HIDDEN_DIR="/var/cache"
-mkdir -p "$PASSWORD_HIDDEN_DIR" 2>/dev/null || true
+BACKUP_DIR="/opt/treasure_hunt/backup"
 
-PASSWORD_FILE="$PASSWORD_HIDDEN_DIR/.quantum_cache_$(generate_filename | cut -d'.' -f1).dat"
-cat > "$PASSWORD_FILE" << 'PWDFILE'
-═══════════════════════════════════════════════════════════════════════════════
-QUANTUM_KEY FOUND!
+# Copia il final_clue.zip
+cp "$ASSETS_DIR/final_clue.zip" "$BACKUP_DIR/"
 
-La password per decriptare il file finale è:
-
-    LinuxMaster2024!
-
-Vai in /opt/treasure_hunt/final e usa:
-    gpg -d final_mission.gpg
-
-Quando chiede la password, inserisci: LinuxMaster2024!
-═══════════════════════════════════════════════════════════════════════════════
-PWDFILE
-
-chmod 644 "$PASSWORD_FILE"
+# Aggiungi qualche file decoy per non rendere troppo ovvio
+create_decoy_files "$BACKUP_DIR" 20
 
 print_progress "Tappa 9 configurata"
 
@@ -722,7 +987,6 @@ cat > "$FINAL_DIR/README_final.txt" << 'FINALREADME'
 FINALREADME
 
 print_progress "Tappa 10 configurata"
-
 #===============================================================================
 # Finalizzazione
 #===============================================================================

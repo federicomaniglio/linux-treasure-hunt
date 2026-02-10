@@ -72,9 +72,7 @@ for idx in "${!ARCHIVE_NAMES[@]}"; do
 ║                                                                               ║
 ║  Lì troverai un file "target_hash.txt" con l'hash da cercare, e molti         ║
 ║  altri file. Devi trovare quale file ha QUELL'HASH!                           ║
-║                                                                               ║
-║  USA: md5sum * | grep "<hash_cercato>"                                        ║
-║                                                                               ║
+║                                                                               ║║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 INDIZIO_VERO
         
@@ -190,14 +188,48 @@ EOF
 done
 
 #-------------------------------------------------------------------------------
-# 2. Crea il file GPG finale
+# 2. Crea il file ZIP con l'indizio finale
 #-------------------------------------------------------------------------------
-echo "[2/2] Creazione file GPG criptato..."
+echo "[2/3] Creazione ZIP indizio finale..."
+
+FINAL_CLUE_TEMP="/tmp/treasure_final_clue_$$"
+mkdir -p "$FINAL_CLUE_TEMP"
+
+cat > "$FINAL_CLUE_TEMP/indizio_finale.txt" << 'FINALCLUE'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                         🐧 MISSIONE LINUX - INDIZIO 10                        ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  🎉 SEI ARRIVATO ALL'ULTIMA TAPPA!                                            ║
+║                                                                               ║
+║  Il file finale criptato si trova in: /opt/treasure_hunt/final                ║
+║                                                                               ║
+║  Ma dove si trova la password?                                                ║
+║                                                                               ║
+║  La vita è un ciclo:                                                          ║
+║  while(true) {                                                               ║
+║       cerca_origine();                                                        ║
+║   }                                                                           ║
+║                                                                               ║║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+FINALCLUE
+
+cd "$FINAL_CLUE_TEMP"
+zip -r "$OLDPWD/$ASSETS_DIR/final_clue.zip" . > /dev/null
+cd "$OLDPWD"
+rm -rf "$FINAL_CLUE_TEMP"
+
+echo "   ✅ final_clue.zip creato"
+
+#-------------------------------------------------------------------------------
+# 3. Crea il file GPG finale
+#-------------------------------------------------------------------------------
+echo "[3/3] Creazione file GPG criptato..."
 
 FINAL_MESSAGE=$(cat << 'FINALE'
 
 
-    ██╗     ██╗███╗   ██╗██╗   ██╗██╗  ██╗    ███╗   ███╗ █████╗ ███████╗████████╗███████╗██████╗ 
+    ██╗     ██╗███╗   ██╗██╗   ██╗██╗  ██╗    ███╗   ███╗ █████╗ ███████╗████████╗███████╗██████╗
     ██║     ██║████╗  ██║██║   ██║╚██╗██╔╝    ████╗ ████║██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗
     ██║     ██║██╔██╗ ██║██║   ██║ ╚███╔╝     ██╔████╔██║███████║███████╗   ██║   █████╗  ██████╔╝
     ██║     ██║██║╚██╗██║██║   ██║ ██╔██╗     ██║╚██╔╝██║██╔══██║╚════██║   ██║   ██╔══╝  ██╔══██╗
@@ -253,11 +285,11 @@ FINAL_MESSAGE=$(cat << 'FINALE'
 FINALE
 )
 
-echo "$FINAL_MESSAGE" | gpg --batch --yes --passphrase "LinuxMaster2024!" \
+echo "$FINAL_MESSAGE" | gpg --batch --yes --passphrase "I love TPSIT" \
     --symmetric --cipher-algo AES256 \
     -o "$ASSETS_DIR/final_mission.gpg" 2>/dev/null
 
-echo "   ✅ final_mission.gpg creato (password: LinuxMaster2024!)"
+echo "   ✅ final_mission.gpg creato (password: I love TPSIT)"
 
 #-------------------------------------------------------------------------------
 # Riepilogo
@@ -275,8 +307,9 @@ echo "   • data_dump_node7.zip        (decoy)"
 echo "   • encrypted_payload.zip      (⭐ INDIZIO VERO in config/core_settings.cfg)"
 echo "   • kernel_snapshot_v2.zip     (decoy)"
 echo "   • memory_sector_dump.zip     (decoy)"
+echo "   • final_clue.zip             (⭐ Indizio finale per tappa 10)"
 echo ""
-echo "🔐 File GPG: final_mission.gpg (password: LinuxMaster2024!)"
+echo "🔐 File GPG: final_mission.gpg (password: I love TPSIT)"
 echo ""
 echo "Ora puoi fare commit e push della repository!"
 echo "═══════════════════════════════════════════════════════════════════"
