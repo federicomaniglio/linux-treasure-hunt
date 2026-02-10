@@ -8,7 +8,8 @@ Benvenuto, aspirante Linux Master!
 2. Esegui questi comandi:
 
 ```bash
-bash git clone https://github.com/federicomaniglio/linux-treasure-hunt.git
+bash 
+git clone https://github.com/federicomaniglio/linux-treasure-hunt.git
 cd linux-treasure-hunt 
 chmod +x setup.sh 
 sudo ./setup.sh
